@@ -379,6 +379,8 @@ const GUANFU_PROFILE = {
   ]
 };
 
+const API_URL = 'https://script.google.com/macros/s/AKfycbw5H1tcIL8kWAn1RMwFzyA5ISz51XfhaIhO6cCOW-Zgl4ZxqTjRsjBWbe6YVLcp5FFDag/exec';
+async function apiFetch(action, method='GET', body=null){ const url = method==='GET' ? `${API_URL}?${new URLSearchParams({action,...(body||{})}).toString()}` : API_URL; const res = await fetch(url,{method,headers:method==='GET'?{}:{'Content-Type':'application/json'},body:method==='GET'?undefined:JSON.stringify({action,...(body||{})})}); return res.json(); }
 // ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
@@ -461,7 +463,7 @@ function renderOverview() {
 // ═══════════════════════════════════════
 // GUANFU WEEKLY
 // ═══════════════════════════════════════
-function saveGuanfu() {
+async function saveGuanfu() {
   const g = {
     date: document.getElementById('gfDate').value,
     xu: document.getElementById('gfXu').value,
@@ -474,6 +476,7 @@ function saveGuanfu() {
     career: parseInt(document.getElementById('gfCareer').value)
   };
   if (!g.date) { toast('Pick a date', 'err'); return; }
+  await apiFetch('growth_addReview','POST',g);
   DATA.guanfuCheckins.push(g);
   DATA.currentScores = { mind: g.mind, body: g.body, spirit: g.spirit, career: g.career };
   ['gfXu','gfJing','gfChang','gfMing'].forEach(id => document.getElementById(id).value = '');
@@ -506,7 +509,7 @@ function renderGuanfuHistory() {
 // ═══════════════════════════════════════
 // MONTHLY REVIEW
 // ═══════════════════════════════════════
-function saveMonthlyReview() {
+async function saveMonthlyReview() {
   const r = {
     month: document.getElementById('reviewMonth').value,
     invest: parseInt(document.getElementById('revInvest').value),
@@ -520,6 +523,7 @@ function saveMonthlyReview() {
     focus: document.getElementById('revFocus').value
   };
   if (!r.month) { toast('Select month', 'err'); return; }
+  await apiFetch('growth_addLuckJournal','POST',{date:r.month+'-01',type:'MonthlyReview',title:r.month,content:JSON.stringify(r)});
   DATA.monthlyReviews.push(r);
   ['revWin','revLesson','revFocus'].forEach(id => document.getElementById(id).value = '');
   save();
@@ -548,7 +552,7 @@ function renderMonthlyHistory() {
 // ═══════════════════════════════════════
 // DECISIONS
 // ═══════════════════════════════════════
-function saveDecision() {
+async function saveDecision() {
   const d = {
     date: document.getElementById('decDate').value,
     title: document.getElementById('decTitle').value,
@@ -558,6 +562,7 @@ function saveDecision() {
     pattern: document.getElementById('decPattern').value
   };
   if (!d.title) { toast('Describe the decision', 'err'); return; }
+  await apiFetch('growth_addLuckJournal','POST',{date:d.date||new Date().toISOString().slice(0,10),type:'Decision',title:d.title,content:JSON.stringify(d)});
   DATA.decisions.push(d);
   ['decTitle','decReason','decExpected','decActual'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('decPattern').value = '';
