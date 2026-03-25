@@ -393,13 +393,24 @@ let DATA = {
   currentScores: { mind: 6, body: 8, spirit: 4, career: 7 }
 };
 
-(function init() {
+(async function init() {
   document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-SG', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   document.getElementById('gfDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('decDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('reviewMonth').value = new Date().toISOString().slice(0,7);
 
-  try { const saved = JSON.parse(localStorage.getItem('daoyou_growth')); if (saved) DATA = {...DATA, ...saved}; } catch(e) {}
+  try {
+    const logs = await apiFetch('growth_getMoodLog');
+    if (logs && logs.logs) {
+      DATA.guanfuCheckins = logs.logs.map(x => ({ date:x.Date, xu:x.Xu, jing:x.Jing, chang:x.Chang, ming:x.Ming, mind:Number(x.Mind||0), body:Number(x.Body||0), spirit:Number(x.Spirit||0), career:Number(x.Career||0) }));
+      if (DATA.guanfuCheckins.length) {
+        const g = DATA.guanfuCheckins[DATA.guanfuCheckins.length - 1];
+        DATA.currentScores = { mind:g.mind, body:g.body, spirit:g.spirit, career:g.career };
+      }
+    }
+  } catch(e) {
+    try { const saved = JSON.parse(localStorage.getItem('daoyou_growth')); if (saved) DATA = {...DATA, ...saved}; } catch(_) {}
+  }
 
   renderAll();
 })();
